@@ -30,3 +30,17 @@ This will be a list of all the tasks that need to be done. A branch will likely 
 - Configure the camera of our game (should be easy)
 - Create 3D models for our environment
 - Implement a start menu and a settings menu
+
+## Potential Architecture
+```
+GameManager (global)
+
+Scenes
+ ├ StartMenu
+ ├ GameScene
+ │   ├ Player
+ │   ├ EnvironmentSpawner
+ │   ├ Camera
+ │   └ UI
+ └ SettingsMenu
+```
