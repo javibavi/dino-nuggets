@@ -33,14 +33,57 @@ This will be a list of all the tasks that need to be done. A branch will likely 
 
 ## Potential Architecture
 ```
-GameManager (global)
-
-Scenes
- ├ StartMenu
- ├ GameScene
- │   ├ Player
- │   ├ EnvironmentSpawner
- │   ├ Camera
- │   └ UI
- └ SettingsMenu
+dinosaur/
+│
+├── project.godot
+├── icon.svg
+├── .gitignore
+│
+├── scenes/
+│   ├── main/
+│   │   └── game.tscn
+│   │
+│   ├── player/
+│   │   └── player.tscn
+│   │
+│   ├── environment/
+│   │   ├── environment_spawner.tscn
+│   │   ├── ground_tile.tscn
+│   │   └── obstacles/
+│   │       ├── cactus.tscn
+│   │       └── rock.tscn
+│   │
+│   ├── ui/
+│   │   └── hud.tscn
+│   │
+│   └── menus/
+│       ├── start_menu.tscn
+│       └── settings_menu.tscn
+│
+├── scripts/
+│   ├── player/
+│   │   └── player_controller.gd
+│   │
+│   ├── environment/
+│   │   └── spawner.gd
+│   │
+│   ├── ui/
+│   │   └── hud_controller.gd
+│   │
+│   └── managers/
+│       └── game_manager.gd
+│
+├── assets/
+│   ├── models/
+│   │   ├── player.glb
+│   │   ├── cactus.glb
+│   │   └── ground_tile.glb
+│   │
+│   ├── textures/
+│   │   └── grass.png
+│   │
+│   └── audio/
+│       ├── jump.wav
+│       └── music.ogg
+│
 ```
