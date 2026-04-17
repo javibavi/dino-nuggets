@@ -1,6 +1,7 @@
 extends CharacterBody3D
 
 signal died
+signal shot_bird
 
 const LANE_WIDTH := 2.5
 const LANE_SWITCH_SPEED := 12.0
@@ -93,3 +94,11 @@ func die() -> void:
 		return
 	is_dead = true
 	died.emit()
+
+## Try to shoot a bird in the current lane. Returns true if one was shot.
+## main.gd is responsible for finding the actual target via the spawner.
+func shoot() -> bool:
+	if is_dead:
+		return false
+	shot_bird.emit()
+	return true

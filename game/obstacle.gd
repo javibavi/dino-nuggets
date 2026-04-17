@@ -16,6 +16,8 @@ extends StaticBody3D
 @export var bob_amplitude := 0.0
 ## Vertical bobbing frequency in Hz.
 @export var bob_frequency := 2.0
+## True for flying obstacles (birds) — eligible to be shot down.
+@export var is_flying := false
 
 var speed := 15.0
 var _model_instance: Node3D = null
@@ -63,3 +65,7 @@ func _physics_process(delta: float) -> void:
 func _on_area_body_entered(body: Node3D) -> void:
 	if body.has_method("die"):
 		body.die()
+
+## Called when this obstacle is shot down. Just despawns for now.
+func shot_down() -> void:
+	queue_free()

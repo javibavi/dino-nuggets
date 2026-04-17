@@ -80,6 +80,39 @@ func spawn_obstacle() -> void:
 
 	add_child(obstacle)
 
+## Spawn a bird directly in a given lane at a given Z (relative to spawner).
+## Used for cross-player attacks coming from the opponent.
+func spawn_bird_in_lane(lane: int, z_distance: float = -25.0) -> void:
+	if bird_scene == null:
+		return
+	lane = clamp(lane, -1, 1)
+	var bird = bird_scene.instantiate()
+	bird.position = Vector3(lane * LANE_WIDTH, bird_height, z_distance)
+	bird.speed = game_speed
+	add_child(bird)
+
+## Find the nearest flying obstacle in a given lane that is in front of the player.
+## Returns null if none.
+func find_flying_in_lane(lane: int, player_z: float) -> Node3D:
+	var lane_x = lane * LANE_WIDTH
+	var best: Node3D = null
+	var best_z := -INF
+	for child in get_children():
+		if not (child is Node3D):
+			continue
+		if not ("is_flying" in child) or not child.is_flying:
+			continue
+		# Same lane (with tolerance) and ahead of the player
+		if abs(child.position.x - lane_x) > LANE_WIDTH * 0.5:
+			continue
+		if child.position.z >= player_z:
+			continue
+		# "Closest in front" = largest z (least negative)
+		if child.position.z > best_z:
+			best_z = child.position.z
+			best = child
+	return best
+
 func update_difficulty(speed: float, interval: float) -> void:
 	game_speed = speed
 	current_interval = interval

@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://cv3cb6ntc4rks" path="res://camera_preview.gd" id="6"]
 [ext_resource type="PackedScene" uid="uid://c0obstaclelow" path="res://obstacle_low.tscn" id="7"]
 [ext_resource type="PackedScene" uid="uid://c0bird" path="res://bird.tscn" id="8"]
+[ext_resource type="Script" path="res://network.gd" id="9"]
 
 [sub_resource type="StandardMaterial3D" id="Material_ground"]
 albedo_color = Color(0.85, 0.85, 0.85, 1)
@@ -169,6 +170,9 @@ bird_height = 2.5
 [node name="InputReceiver" type="Node" parent="." unique_id=1687558405]
 script = ExtResource("4")
 
+[node name="Network" type="Node" parent="."]
+script = ExtResource("9")
+
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1721202310]
 transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 10, 0)
 shadow_enabled = true
@@ -239,6 +243,20 @@ grow_horizontal = 0
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Camera: starting..."
+horizontal_alignment = 2
+
+[node name="NetworkLabel" type="Label" parent="UI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -440.0
+offset_top = 60.0
+offset_right = -20.0
+offset_bottom = 90.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+text = "Network: offline"
 horizontal_alignment = 2
 
 [node name="CameraPanel" type="PanelContainer" parent="UI" unique_id=853184435]

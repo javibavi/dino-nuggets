@@ -25,6 +25,7 @@ model_color = Color(0, 0, 0, 1)
 apply_color = true
 bob_amplitude = 0.25
 bob_frequency = 2.5
+is_flying = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 visible = false

@@ -10,6 +10,8 @@ extends Node3D
 @onready var ground_1: StaticBody3D = $Ground1
 @onready var ground_2: StaticBody3D = $Ground2
 @onready var gesture_label: Label = $UI/GestureLabel
+@onready var network: Node = $Network
+@onready var network_label: Label = $UI/NetworkLabel
 
 var score := 0.0
 var gesture_display_timer := 0.0
@@ -28,6 +30,9 @@ func _ready() -> void:
 	spawner.player = player
 	player.died.connect(_on_player_died)
 	input_receiver.gesture_received.connect(_on_gesture_received)
+	network.incoming_attack.connect(_on_incoming_attack)
+	network.status_changed.connect(_on_network_status)
+	network_label.text = "Network: offline (H=host, J=join localhost)"
 	gesture_label.text = "Waiting for tracker..."
 	ground_1.position.z = 0.0
 	ground_2.position.z = -GROUND_LENGTH
@@ -35,10 +40,20 @@ func _ready() -> void:
 	camera_offset = camera.global_position - player.global_position
 
 func _process(delta: float) -> void:
+	# Networking hotkeys (work even after game over)
+	if Input.is_action_just_pressed("net_host"):
+		network.host()
+	if Input.is_action_just_pressed("net_join"):
+		network.join("127.0.0.1")
+
 	if is_game_over:
 		if Input.is_action_just_pressed("restart") or Input.is_action_just_pressed("jump"):
 			restart_game()
 		return
+
+	# Local shoot (keyboard fallback for the gun gesture)
+	if Input.is_action_just_pressed("shoot"):
+		_try_shoot()
 
 	# Update score
 	score += game_speed * delta
@@ -94,9 +109,34 @@ func _on_gesture_received(gesture: String) -> void:
 		"swipe_up":
 			player.jump()
 			gesture_label.text = "JUMP ^"
+		"shoot":
+			_try_shoot()
+			gesture_label.text = "* PEW! *"
 		"ping":
 			gesture_label.text = "Camera: connected"
 	gesture_display_timer = 1.0
+
+func _try_shoot() -> void:
+	if is_game_over:
+		return
+	# Look for a bird in our current lane and ahead of us.
+	var target = spawner.find_flying_in_lane(player.current_lane, player.position.z)
+	if target == null:
+		return
+	target.shot_down()
+	player.shoot()
+	# Hand the bird off to the other player.
+	network.send_attack(player.current_lane)
+
+func _on_incoming_attack(_lane: int) -> void:
+	if is_game_over:
+		return
+	# Drop a bird right in front of the LOCAL dino, regardless of which lane
+	# the attacker shot from — the bird is "magically delivered" to us.
+	spawner.spawn_bird_in_lane(player.current_lane, -25.0)
+
+func _on_network_status(text: String) -> void:
+	network_label.text = "Network: " + text
 
 func _on_player_died() -> void:
 	is_game_over = true

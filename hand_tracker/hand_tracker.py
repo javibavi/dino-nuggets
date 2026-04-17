@@ -54,6 +54,40 @@ def get_palm_center(landmarks):
     )
 
 
+def _dist(a, b):
+    return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2) ** 0.5
+
+
+def is_gun_sign(landmarks) -> bool:
+    """Detect a 'gun' hand pose: index + thumb extended, other fingers folded.
+
+    Uses tip-to-wrist vs PIP-to-wrist distance to decide if a finger is
+    extended (palm orientation independent).
+    """
+    wrist = landmarks[0]
+    # Per-finger: (tip_idx, pip_idx)
+    fingers = {
+        "index":  (8, 6),
+        "middle": (12, 10),
+        "ring":   (16, 14),
+        "pinky":  (20, 18),
+    }
+    extended = {}
+    for name, (tip, pip) in fingers.items():
+        extended[name] = _dist(landmarks[tip], wrist) > _dist(landmarks[pip], wrist) * 1.10
+
+    # Thumb: compare tip (4) vs IP (3) distance from wrist
+    thumb_extended = _dist(landmarks[4], wrist) > _dist(landmarks[3], wrist) * 1.05
+
+    return (
+        extended["index"]
+        and thumb_extended
+        and not extended["middle"]
+        and not extended["ring"]
+        and not extended["pinky"]
+    )
+
+
 def draw_hand(frame, landmarks, palm_x, palm_y):
     h, w = frame.shape[:2]
     conns = [
@@ -120,6 +154,12 @@ def main():
     last_gesture = ""
     frame_ts = 0  # MediaPipe needs increasing timestamps in ms
 
+    # Gun-sign tracking — require N consecutive frames before firing,
+    # then require a non-gun frame before re-arming.
+    gun_streak = 0
+    gun_armed = True
+    GUN_STREAK_NEEDED = 4
+
     # Frame saving
     last_frame_write = 0.0
 
@@ -147,8 +187,19 @@ def main():
 
                 history.append((now, px, py))
 
+                # Gun-sign detection (priority over swipes)
+                if is_gun_sign(lm):
+                    gun_streak += 1
+                    if gun_streak >= GUN_STREAK_NEEDED and gun_armed:
+                        if (now - last_gesture_time) >= args.cooldown:
+                            detected = "shoot"
+                            gun_armed = False
+                else:
+                    gun_streak = 0
+                    gun_armed = True
+
                 # Need enough history points
-                if len(history) >= 4:
+                if not detected and len(history) >= 4:
                     # Compare current to position ~0.15-0.3s ago
                     target_age = 0.2
                     best_idx = 0
@@ -167,7 +218,7 @@ def main():
                         dy = py - old_y
                         in_cd = (now - last_gesture_time) < args.cooldown
 
-                        if not in_cd:
+                        if not in_cd and gun_streak == 0:
                             # Horizontal swipe
                             if abs(dx) > args.threshold and abs(dx) > abs(dy) * 1.3:
                                 detected = "swipe_right" if dx > 0 else "swipe_left"
@@ -214,7 +265,12 @@ def main():
 
             # Gesture flash
             if last_gesture and (now - last_gesture_time) < 0.7:
-                label = {"swipe_left": "<< LEFT", "swipe_right": "RIGHT >>", "swipe_up": "^ JUMP ^"}.get(last_gesture, "")
+                label = {
+                    "swipe_left": "<< LEFT",
+                    "swipe_right": "RIGHT >>",
+                    "swipe_up": "^ JUMP ^",
+                    "shoot": "* PEW! *",
+                }.get(last_gesture, "")
                 sz = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1.8, 3)[0]
                 tx = (fw - sz[0]) // 2
                 ty = fh // 2 + 20
