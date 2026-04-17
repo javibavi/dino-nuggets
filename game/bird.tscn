@@ -4,13 +4,13 @@
 [ext_resource type="PackedScene" path="res://models/bird.glb" id="2"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_bird"]
-size = Vector3(1.4, 0.6, 1.0)
+size = Vector3(2.0, 1.0, 1.6)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bird"]
-size = Vector3(1.4, 0.6, 1.0)
+size = Vector3(2.0, 1.0, 1.6)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bird_area"]
-size = Vector3(1.6, 0.8, 1.2)
+size = Vector3(2.2, 1.2, 1.8)
 
 [sub_resource type="StandardMaterial3D" id="Material_bird"]
 albedo_color = Color(0.2, 0.2, 0.2, 1)
@@ -18,9 +18,9 @@ albedo_color = Color(0.2, 0.2, 0.2, 1)
 [node name="Bird" type="StaticBody3D"]
 script = ExtResource("1")
 obstacle_model = ExtResource("2")
-model_scale = Vector3(0.6, 0.6, 0.6)
+model_scale = Vector3(1.0, 1.0, 1.0)
 model_y_offset = 0.0
-model_rotation = Vector3(0, 90, 0)
+model_rotation = Vector3(0, 180, 0)
 model_color = Color(0, 0, 0, 1)
 apply_color = true
 bob_amplitude = 0.25
