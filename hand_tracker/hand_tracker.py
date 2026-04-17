@@ -117,12 +117,13 @@ def main():
         sock.sendto(msg.encode(), target)
         print(f"  >>> {msg}")
 
-    # MediaPipe HandLandmarker in VIDEO mode for temporal tracking
+    # MediaPipe HandLandmarker in VIDEO mode for temporal tracking.
+    # num_hands=2 so we can route each hand to a separate split-screen player.
     base_options = mp_python.BaseOptions(model_asset_path=MODEL_PATH)
     options = vision.HandLandmarkerOptions(
         base_options=base_options,
         running_mode=vision.RunningMode.VIDEO,
-        num_hands=1,
+        num_hands=2,
         min_hand_detection_confidence=0.4,
         min_hand_presence_confidence=0.4,
         min_tracking_confidence=0.4,
@@ -148,17 +149,15 @@ def main():
     # Send ping so Godot knows we connected
     send("ping")
 
-    # Gesture state
-    history = deque(maxlen=15)
-    last_gesture_time = 0.0
-    last_gesture = ""
-    frame_ts = 0  # MediaPipe needs increasing timestamps in ms
-
-    # Gun-sign tracking — require N consecutive frames before firing,
-    # then require a non-gun frame before re-arming.
-    gun_streak = 0
-    gun_armed = True
+    # Per-player gesture state. Player 1 = left half of frame, Player 2 = right.
     GUN_STREAK_NEEDED = 4
+    state = {
+        1: {"history": deque(maxlen=15), "last_t": 0.0, "last_g": "",
+            "gun_streak": 0, "gun_armed": True},
+        2: {"history": deque(maxlen=15), "last_t": 0.0, "last_g": "",
+            "gun_streak": 0, "gun_armed": True},
+    }
+    frame_ts = 0  # MediaPipe needs increasing timestamps in ms
 
     # Frame saving
     last_frame_write = 0.0
@@ -178,61 +177,78 @@ def main():
             frame_ts += 33  # ~30fps timestamps
             result = landmarker.detect_for_video(mp_image, frame_ts)
 
-            detected = ""
-
+            # Map each detected hand → a player based on its palm x position.
+            # Left half of frame (x < 0.5) goes to Player 1, right half to P2.
+            # If both hands land on the same side, the one closer to the
+            # appropriate edge wins; the other is dropped to avoid duplicates.
+            seen_players = set()
+            per_player_lm = {}  # player_id -> (lm, px, py)
             if result.hand_landmarks:
-                lm = result.hand_landmarks[0]
-                px, py = get_palm_center(lm)
-                draw_hand(frame, lm, px, py)
+                hands = []
+                for lm in result.hand_landmarks:
+                    px, py = get_palm_center(lm)
+                    hands.append((px, py, lm))
+                # Sort left-to-right; first → P1, second (if any) → P2.
+                hands.sort(key=lambda h: h[0])
+                if len(hands) >= 1:
+                    px, py, lm = hands[0]
+                    per_player_lm[1] = (lm, px, py)
+                if len(hands) >= 2:
+                    px, py, lm = hands[1]
+                    per_player_lm[2] = (lm, px, py)
 
-                history.append((now, px, py))
+            # Process each player independently.
+            last_detected = {}  # for HUD only
+            for pid in (1, 2):
+                s = state[pid]
+                if pid not in per_player_lm:
+                    s["history"].clear()
+                    s["gun_streak"] = 0
+                    s["gun_armed"] = True
+                    continue
+                lm, px, py = per_player_lm[pid]
+                draw_hand(frame, lm, px, py)
+                s["history"].append((now, px, py))
+                detected = ""
 
                 # Gun-sign detection (priority over swipes)
                 if is_gun_sign(lm):
-                    gun_streak += 1
-                    if gun_streak >= GUN_STREAK_NEEDED and gun_armed:
-                        if (now - last_gesture_time) >= args.cooldown:
+                    s["gun_streak"] += 1
+                    if s["gun_streak"] >= GUN_STREAK_NEEDED and s["gun_armed"]:
+                        if (now - s["last_t"]) >= args.cooldown:
                             detected = "shoot"
-                            gun_armed = False
+                            s["gun_armed"] = False
                 else:
-                    gun_streak = 0
-                    gun_armed = True
+                    s["gun_streak"] = 0
+                    s["gun_armed"] = True
 
-                # Need enough history points
-                if not detected and len(history) >= 4:
-                    # Compare current to position ~0.15-0.3s ago
+                if not detected and len(s["history"]) >= 4:
                     target_age = 0.2
                     best_idx = 0
-                    best_diff = abs(history[0][0] - (now - target_age))
-                    for i in range(1, len(history)):
-                        diff = abs(history[i][0] - (now - target_age))
+                    best_diff = abs(s["history"][0][0] - (now - target_age))
+                    for i in range(1, len(s["history"])):
+                        diff = abs(s["history"][i][0] - (now - target_age))
                         if diff < best_diff:
                             best_diff = diff
                             best_idx = i
-
-                    old_t, old_x, old_y = history[best_idx]
+                    old_t, old_x, old_y = s["history"][best_idx]
                     dt = now - old_t
-
                     if 0.08 < dt < 0.5:
                         dx = px - old_x
                         dy = py - old_y
-                        in_cd = (now - last_gesture_time) < args.cooldown
-
-                        if not in_cd and gun_streak == 0:
-                            # Horizontal swipe
+                        in_cd = (now - s["last_t"]) < args.cooldown
+                        if not in_cd and s["gun_streak"] == 0:
                             if abs(dx) > args.threshold and abs(dx) > abs(dy) * 1.3:
                                 detected = "swipe_right" if dx > 0 else "swipe_left"
-                            # Upward swipe (y decreases going up)
                             elif dy < -args.threshold and abs(dy) > abs(dx) * 1.3:
                                 detected = "swipe_up"
 
                 if detected:
-                    send(detected)
-                    last_gesture_time = now
-                    last_gesture = detected
-                    history.clear()
-            else:
-                history.clear()
+                    send("p%d:%s" % (pid, detected))
+                    s["last_t"] = now
+                    s["last_g"] = detected
+                    s["history"].clear()
+                    last_detected[pid] = detected
 
             # === Draw UI ===
             fh, fw = frame.shape[:2]
@@ -243,39 +259,35 @@ def main():
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
             if result.hand_landmarks:
-                cv2.putText(frame, "HAND OK", (10, 55),
+                cv2.putText(frame, "HANDS: %d" % len(result.hand_landmarks), (10, 55),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                # Debug: show movement values
-                if len(history) >= 2:
-                    dx = history[-1][1] - history[0][1]
-                    dy = history[-1][2] - history[0][2]
-                    thr = args.threshold
-                    bar_w = 200
-                    bar_y = 65
-                    # dx bar
-                    bar_dx = int(max(-1, min(1, dx / thr)) * bar_w / 2)
-                    cv2.rectangle(frame, (300, bar_y - 5), (300 + bar_w, bar_y + 5), (50, 50, 50), -1)
-                    center_x = 300 + bar_w // 2
-                    color = (0, 255, 255) if abs(dx) > thr else (100, 100, 100)
-                    cv2.rectangle(frame, (center_x, bar_y - 5), (center_x + bar_dx, bar_y + 5), color, -1)
-                    cv2.putText(frame, "L/R", (300 - 30, bar_y + 5), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (200, 200, 200), 1)
             else:
-                cv2.putText(frame, "Show your hand to the camera!", (10, 55),
+                cv2.putText(frame, "Show one or two hands!", (10, 55),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-            # Gesture flash
-            if last_gesture and (now - last_gesture_time) < 0.7:
-                label = {
-                    "swipe_left": "<< LEFT",
-                    "swipe_right": "RIGHT >>",
-                    "swipe_up": "^ JUMP ^",
-                    "shoot": "* PEW! *",
-                }.get(last_gesture, "")
-                sz = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1.8, 3)[0]
-                tx = (fw - sz[0]) // 2
-                ty = fh // 2 + 20
-                cv2.rectangle(frame, (tx - 15, ty - sz[1] - 15), (tx + sz[0] + 15, ty + 15), (0, 0, 0), -1)
-                cv2.putText(frame, label, (tx, ty), cv2.FONT_HERSHEY_SIMPLEX, 1.8, (0, 255, 255), 3)
+            # Vertical divider showing P1/P2 split
+            cv2.line(frame, (fw // 2, 75), (fw // 2, fh), (180, 180, 180), 1)
+            cv2.putText(frame, "P1", (fw // 4 - 15, fh - 12),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (180, 180, 180), 2)
+            cv2.putText(frame, "P2", (3 * fw // 4 - 15, fh - 12),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (180, 180, 180), 2)
+
+            # Gesture flash for whichever player just acted (newest wins)
+            label_map = {
+                "swipe_left": "<< LEFT",
+                "swipe_right": "RIGHT >>",
+                "swipe_up": "^ JUMP ^",
+                "shoot": "* PEW! *",
+            }
+            for pid in (1, 2):
+                s = state[pid]
+                if s["last_g"] and (now - s["last_t"]) < 0.7:
+                    label = "P%d %s" % (pid, label_map.get(s["last_g"], ""))
+                    sz = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 1.2, 3)[0]
+                    tx = (fw // 2 - sz[0]) // 2 if pid == 1 else fw // 2 + (fw // 2 - sz[0]) // 2
+                    ty = fh // 2 + 20
+                    cv2.rectangle(frame, (tx - 12, ty - sz[1] - 12), (tx + sz[0] + 12, ty + 12), (0, 0, 0), -1)
+                    cv2.putText(frame, label, (tx, ty), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
 
             # Save frame for Godot
             if now - last_frame_write >= 0.1:

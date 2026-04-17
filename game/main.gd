@@ -1,160 +1,95 @@
-extends Node3D
+extends Node
 
-@onready var player: CharacterBody3D = $Player
-@onready var camera: Camera3D = $Camera3D
-@onready var spawner: Node3D = $ObstacleSpawner
-@onready var input_receiver: Node = $InputReceiver
-@onready var score_label: Label = $UI/ScoreLabel
-@onready var game_over_panel: PanelContainer = $UI/GameOverPanel
-@onready var final_score_label: Label = $UI/GameOverPanel/VBoxContainer/FinalScoreLabel
-@onready var ground_1: StaticBody3D = $Ground1
-@onready var ground_2: StaticBody3D = $Ground2
+## Split-screen multiplayer router.
+## - Owns two GameWorld instances (one per SubViewport).
+## - Routes the InputReceiver's per-player gestures.
+## - When a player shoots a bird, calls receive_attack() on the OTHER world
+##   so the bird "magically appears" in front of the opponent.
+
+@onready var p1: Node3D = $UI/Split/LeftViewport/SubViewport/GameWorld
+@onready var p2: Node3D = $UI/Split/RightViewport/SubViewport/GameWorld
+@onready var p1_label: Label = $UI/P1Label
+@onready var p2_label: Label = $UI/P2Label
 @onready var gesture_label: Label = $UI/GestureLabel
-@onready var network: Node = $Network
-@onready var network_label: Label = $UI/NetworkLabel
+@onready var game_over_panel: PanelContainer = $UI/GameOverPanel
+@onready var result_label: Label = $UI/GameOverPanel/VBoxContainer/ResultLabel
+@onready var input_receiver: Node = $InputReceiver
 
-var score := 0.0
 var gesture_display_timer := 0.0
-var game_speed := 15.0
-var is_game_over := false
-var speed_increase_rate := 0.5
-var max_speed := 40.0
-
-const GROUND_LENGTH := 200.0
-
-## Camera offset from the player (set in _ready from initial camera position).
-var camera_offset := Vector3.ZERO
 
 func _ready() -> void:
 	game_over_panel.visible = false
-	spawner.player = player
-	player.died.connect(_on_player_died)
+	gesture_label.text = "Waiting for tracker…"
+
+	for world in [p1, p2]:
+		world.score_changed.connect(_on_score_changed)
+		world.shot_fired.connect(_on_shot_fired)
+		world.died.connect(_on_world_died)
+
 	input_receiver.gesture_received.connect(_on_gesture_received)
-	network.incoming_attack.connect(_on_incoming_attack)
-	network.status_changed.connect(_on_network_status)
-	network_label.text = "Network: offline  •  H=host  J=join localhost  •  A=shoot"
-	gesture_label.text = "Waiting for tracker..."
-	ground_1.position.z = 0.0
-	ground_2.position.z = -GROUND_LENGTH
-	# Store the initial offset so camera tracks the player
-	camera_offset = camera.global_position - player.global_position
 
 func _process(delta: float) -> void:
-	# Networking hotkeys (work even after game over)
-	if Input.is_action_just_pressed("net_host"):
-		network.host()
-	if Input.is_action_just_pressed("net_join"):
-		network.join("127.0.0.1")
+	# R restarts both at any time.
+	if Input.is_action_just_pressed("restart"):
+		_restart_both()
 
-	if is_game_over:
-		if Input.is_action_just_pressed("restart") or Input.is_action_just_pressed("jump"):
-			restart_game()
-		return
-
-	# Local shoot (keyboard fallback for the gun gesture)
-	if Input.is_action_just_pressed("shoot"):
-		_try_shoot()
-
-	# Update score
-	score += game_speed * delta
-	score_label.text = "Score: %d" % int(score)
-
-	# Increase speed over time
-	game_speed = min(game_speed + speed_increase_rate * delta, max_speed)
-
-	# Update spawn difficulty
-	var interval = lerp(1.5, 0.6, (game_speed - 15.0) / (max_speed - 15.0))
-	spawner.update_difficulty(game_speed, interval)
-
-	# Scroll ground
-	_scroll_ground(ground_1, delta)
-	_scroll_ground(ground_2, delta)
-
-	# Update obstacle speeds
-	for child in spawner.get_children():
-		if child.has_method("_physics_process"):
-			child.speed = game_speed
-
-	# Camera always looks at the dino's center
-	camera.global_position = player.global_position + camera_offset
-	camera.look_at(player.global_position + Vector3(0, 1.5, 0), Vector3.UP)
-
-	# Gesture label timer
 	if gesture_display_timer > 0:
 		gesture_display_timer -= delta
 		if gesture_display_timer <= 0:
 			if input_receiver.is_connected_to_tracker():
 				gesture_label.text = "Camera: connected"
 			else:
-				gesture_label.text = "Waiting for tracker..."
+				gesture_label.text = "Waiting for tracker…"
 
-func _scroll_ground(ground: StaticBody3D, delta: float) -> void:
-	ground.position.z += game_speed * delta
-	if ground.position.z > GROUND_LENGTH:
-		ground.position.z -= GROUND_LENGTH * 2.0
+func _on_score_changed(player_id: int, score: int) -> void:
+	if player_id == 1:
+		p1_label.text = "P1: %d" % score
+	else:
+		p2_label.text = "P2: %d" % score
 
-func _on_gesture_received(gesture: String) -> void:
-	if is_game_over:
-		if gesture == "swipe_up":
-			restart_game()
+func _on_shot_fired(player_id: int) -> void:
+	# The OTHER player gets the bird shoved at them.
+	var target := p2 if player_id == 1 else p1
+	target.receive_attack()
+
+func _on_world_died(_player_id: int) -> void:
+	# Game over when EITHER player dies (simple co-op-versus rule).
+	if game_over_panel.visible:
+		return
+	# Stop both worlds so the second player can't keep racking up score.
+	p1.is_game_over = true
+	p2.is_game_over = true
+	p1.spawner.stop()
+	p2.spawner.stop()
+	game_over_panel.visible = true
+	var s1 := int(p1.score)
+	var s2 := int(p2.score)
+	var verdict := "Tie!"
+	if s1 > s2: verdict = "P1 wins!"
+	elif s2 > s1: verdict = "P2 wins!"
+	result_label.text = "P1: %d   P2: %d   —   %s" % [s1, s2, verdict]
+
+func _restart_both() -> void:
+	game_over_panel.visible = false
+	p1.reset()
+	p2.reset()
+
+func _on_gesture_received(player_id: int, gesture: String) -> void:
+	# player_id 0 = unprefixed (e.g. "ping"). Treat as a status update.
+	if player_id == 0:
+		if gesture == "ping":
+			gesture_label.text = "Camera: connected"
+			gesture_display_timer = 1.0
 		return
 
-	match gesture:
-		"swipe_left":
-			player.move_lane(-1)
-			gesture_label.text = "<< LEFT"
-		"swipe_right":
-			player.move_lane(1)
-			gesture_label.text = "RIGHT >>"
-		"swipe_up":
-			player.jump()
-			gesture_label.text = "JUMP ^"
-		"shoot":
-			_try_shoot()
-			gesture_label.text = "* PEW! *"
-		"ping":
-			gesture_label.text = "Camera: connected"
+	gesture_label.text = "P%d: %s" % [player_id, gesture]
 	gesture_display_timer = 1.0
 
-func _try_shoot() -> void:
-	if is_game_over:
+	if game_over_panel.visible:
+		# Allow swipe_up from either player to restart.
+		if gesture == "swipe_up":
+			_restart_both()
 		return
-	# Look for a bird in our current lane and ahead of us.
-	var target = spawner.find_flying_in_lane(player.current_lane, player.position.z)
-	if target == null:
-		return
-	target.shot_down()
-	player.shoot()
-	# Hand the bird off to the other player.
-	network.send_attack(player.current_lane)
 
-func _on_incoming_attack(_lane: int) -> void:
-	if is_game_over:
-		return
-	# Drop a bird right in front of the LOCAL dino, regardless of which lane
-	# the attacker shot from — the bird is "magically delivered" to us.
-	spawner.spawn_bird_in_lane(player.current_lane, -25.0)
-
-func _on_network_status(text: String) -> void:
-	network_label.text = "Network: " + text
-
-func _on_player_died() -> void:
-	is_game_over = true
-	spawner.stop()
-	game_over_panel.visible = true
-	final_score_label.text = "Score: %d" % int(score)
-
-func restart_game() -> void:
-	is_game_over = false
-	score = 0.0
-	game_speed = 15.0
-	game_over_panel.visible = false
-	player.is_dead = false
-	player.current_lane = 0
-	player.target_x = 0.0
-	player.position = Vector3(0, 0.5, 0)
-	player.vertical_velocity = 0.0
-	player.velocity = Vector3.ZERO
-	ground_1.position.z = 0.0
-	ground_2.position.z = -GROUND_LENGTH
-	spawner.reset()
+	var world := p1 if player_id == 1 else p2
+	world.on_gesture(gesture)

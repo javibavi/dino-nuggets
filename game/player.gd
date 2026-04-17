@@ -16,6 +16,10 @@ const GRAVITY := 30.0
 @export var model_rotation_y := 0.0
 ## Vertical offset to align model with ground.
 @export var model_y_offset := 0.0
+## Prefix for input actions ("p1" or "p2" in split-screen mode).
+## Falls back to legacy single-player actions (move_left, move_right, jump)
+## when no prefixed action exists.
+@export var input_prefix := "p1"
 
 var current_lane := 0  # -1 = left, 0 = center, 1 = right
 var target_x := 0.0
@@ -54,12 +58,12 @@ func _physics_process(delta: float) -> void:
 	if is_dead:
 		return
 
-	# Keyboard input
-	if Input.is_action_just_pressed("move_left"):
+	# Keyboard input — use the per-player prefix.
+	if Input.is_action_just_pressed(input_prefix + "_left"):
 		move_lane(-1)
-	if Input.is_action_just_pressed("move_right"):
+	if Input.is_action_just_pressed(input_prefix + "_right"):
 		move_lane(1)
-	if Input.is_action_just_pressed("jump"):
+	if Input.is_action_just_pressed(input_prefix + "_jump"):
 		jump()
 
 	# Smooth lane switching

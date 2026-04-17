@@ -1,6 +1,8 @@
 extends Node
 
-signal gesture_received(gesture: String)
+## Emitted with the player_id (1 or 2) and the bare gesture name.
+## A player_id of 0 means "broadcast / no player" (e.g. "ping").
+signal gesture_received(player_id: int, gesture: String)
 
 ## Enable to auto-launch the Python hand tracker when the game starts.
 @export var auto_launch_tracker := true
@@ -63,11 +65,22 @@ func _process(_delta: float) -> void:
 	while udp_server.get_available_packet_count() > 0:
 		var packet = udp_server.get_packet()
 		var message = packet.get_string_from_utf8().strip_edges()
-		if message != "":
-			if not connected:
-				connected = true
-				print("InputReceiver: Hand tracker connected!")
-			gesture_received.emit(message)
+		if message == "":
+			continue
+		if not connected:
+			connected = true
+			print("InputReceiver: Hand tracker connected!")
+		# Parse "p1:swipe_left" / "p2:shoot" prefixed messages.
+		# Unprefixed messages (e.g. "ping") are broadcast as player 0.
+		var player_id := 0
+		var gesture: String = message
+		if message.begins_with("p1:"):
+			player_id = 1
+			gesture = message.substr(3)
+		elif message.begins_with("p2:"):
+			player_id = 2
+			gesture = message.substr(3)
+		gesture_received.emit(player_id, gesture)
 
 func is_connected_to_tracker() -> bool:
 	return connected
