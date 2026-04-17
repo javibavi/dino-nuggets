@@ -32,7 +32,7 @@ func _ready() -> void:
 	input_receiver.gesture_received.connect(_on_gesture_received)
 	network.incoming_attack.connect(_on_incoming_attack)
 	network.status_changed.connect(_on_network_status)
-	network_label.text = "Network: offline (H=host, J=join localhost)"
+	network_label.text = "Network: offline  •  H=host  J=join localhost  •  A=shoot"
 	gesture_label.text = "Waiting for tracker..."
 	ground_1.position.z = 0.0
 	ground_2.position.z = -GROUND_LENGTH
