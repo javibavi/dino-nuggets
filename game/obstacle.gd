@@ -12,12 +12,19 @@ extends StaticBody3D
 @export var model_color := Color(0, 0, 0, 1)
 ## Whether to apply model_color to the model.
 @export var apply_color := true
+## Vertical bobbing amplitude (0 = disabled). Useful for flying obstacles like birds.
+@export var bob_amplitude := 0.0
+## Vertical bobbing frequency in Hz.
+@export var bob_frequency := 2.0
 
 var speed := 15.0
 var _model_instance: Node3D = null
+var _bob_base_y := 0.0
+var _bob_time := 0.0
 
 func _ready() -> void:
 	_setup_model()
+	_bob_base_y = position.y
 
 func _setup_model() -> void:
 	var mesh_node: MeshInstance3D = $MeshInstance3D
@@ -46,6 +53,9 @@ func _apply_color_recursive(node: Node) -> void:
 
 func _physics_process(delta: float) -> void:
 	position.z += speed * delta
+	if bob_amplitude > 0.0:
+		_bob_time += delta
+		position.y = _bob_base_y + sin(_bob_time * bob_frequency * TAU) * bob_amplitude
 	# Remove when behind camera
 	if position.z > 10.0:
 		queue_free()

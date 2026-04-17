@@ -1,0 +1,42 @@
+[gd_scene load_steps=7 format=3 uid="uid://c0bird"]
+
+[ext_resource type="Script" path="res://obstacle.gd" id="1"]
+[ext_resource type="PackedScene" path="res://models/bird.glb" id="2"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_bird"]
+size = Vector3(1.4, 0.6, 1.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bird"]
+size = Vector3(1.4, 0.6, 1.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bird_area"]
+size = Vector3(1.6, 0.8, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="Material_bird"]
+albedo_color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="Bird" type="StaticBody3D"]
+script = ExtResource("1")
+obstacle_model = ExtResource("2")
+model_scale = Vector3(0.6, 0.6, 0.6)
+model_y_offset = 0.0
+model_rotation = Vector3(0, 90, 0)
+model_color = Color(0, 0, 0, 1)
+apply_color = true
+bob_amplitude = 0.25
+bob_frequency = 2.5
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+visible = false
+mesh = SubResource("BoxMesh_bird")
+material_override = SubResource("Material_bird")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_bird")
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("BoxShape3D_bird_area")
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_body_entered"]

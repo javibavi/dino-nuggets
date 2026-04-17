@@ -4,6 +4,12 @@ extends Node3D
 @export var obstacle_scene: PackedScene
 ## Optional: separate scene for low obstacles (can jump over). If not set, uses obstacle_scene for both.
 @export var low_obstacle_scene: PackedScene
+## Optional: flying obstacle scene (e.g. bird). Spawns elevated and forces a lane switch.
+@export var bird_scene: PackedScene
+## Probability (0–1) that any spawn is a bird instead of a ground obstacle.
+@export var bird_chance := 0.25
+## Y position at which birds spawn.
+@export var bird_height := 2.5
 @export var spawn_distance := -80.0
 @export var min_interval := 0.6
 @export var max_interval := 2.0
@@ -33,21 +39,28 @@ func spawn_obstacle() -> void:
 		return
 
 	var lane = LANES[randi() % LANES.size()]
-	var is_tall = randf() > 0.4  # 60% tall, 40% low
+	var is_bird = bird_scene != null and randf() < bird_chance
+	var is_tall := false
 
 	var scene_to_use: PackedScene
-	if is_tall:
-		scene_to_use = obstacle_scene
+	var spawn_y := 0.0
+	if is_bird:
+		scene_to_use = bird_scene
+		spawn_y = bird_height
 	else:
-		scene_to_use = low_obstacle_scene if low_obstacle_scene else obstacle_scene
+		is_tall = randf() > 0.4  # 60% tall, 40% low
+		if is_tall:
+			scene_to_use = obstacle_scene
+		else:
+			scene_to_use = low_obstacle_scene if low_obstacle_scene else obstacle_scene
 
 	var obstacle = scene_to_use.instantiate()
-	obstacle.position = Vector3(lane * LANE_WIDTH, 0, spawn_distance)
+	obstacle.position = Vector3(lane * LANE_WIDTH, spawn_y, spawn_distance)
 	obstacle.speed = game_speed
 
 	# If using the same scene for both types and no custom model,
 	# adjust the placeholder mesh/collision sizes
-	if not is_tall and low_obstacle_scene == null:
+	if not is_bird and not is_tall and low_obstacle_scene == null:
 		var mesh: MeshInstance3D = obstacle.get_node("MeshInstance3D")
 		var collision: CollisionShape3D = obstacle.get_node("CollisionShape3D")
 		var area_collision: CollisionShape3D = obstacle.get_node("Area3D/CollisionShape3D")
