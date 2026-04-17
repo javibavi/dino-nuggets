@@ -18,6 +18,7 @@ var spawn_timer := 0.0
 var current_interval := 1.5
 var game_speed := 15.0
 var is_active := true
+var player: Node3D = null
 
 const LANE_WIDTH := 2.5
 const LANES := [-1, 0, 1]
@@ -45,6 +46,9 @@ func spawn_obstacle() -> void:
 	var scene_to_use: PackedScene
 	var spawn_y := 0.0
 	if is_bird:
+		# Bird flies straight at the player — spawn in the player's current lane.
+		if player and "current_lane" in player:
+			lane = player.current_lane
 		scene_to_use = bird_scene
 		spawn_y = bird_height
 	else:

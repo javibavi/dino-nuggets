@@ -25,6 +25,7 @@ var camera_offset := Vector3.ZERO
 
 func _ready() -> void:
 	game_over_panel.visible = false
+	spawner.player = player
 	player.died.connect(_on_player_died)
 	input_receiver.gesture_received.connect(_on_gesture_received)
 	gesture_label.text = "Waiting for tracker..."
