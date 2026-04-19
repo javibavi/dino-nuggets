@@ -18,17 +18,16 @@ var gesture_display_timer := 0.0
 var elapsed_time := 0.0
 var game_running := false
 
+
 func _ready() -> void:
 	game_over_panel.visible = false
-	gesture_label.text = "Waiting for tracker…"
-	p2_label.visible = false
-	game_running = true
 
 	for world in [p1, p2]:
 		world.shot_fired.connect(_on_shot_fired)
 		world.died.connect(_on_world_died)
 
 	input_receiver.gesture_received.connect(_on_gesture_received)
+
 
 func _format_time(t: float) -> String:
 	var m := int(t) / 60
@@ -44,13 +43,7 @@ func _process(delta: float) -> void:
 		elapsed_time += delta
 		timer_label.text = _format_time(elapsed_time)
 
-	if gesture_display_timer > 0:
-		gesture_display_timer -= delta
-		if gesture_display_timer <= 0:
-			if input_receiver.is_connected_to_tracker():
-				gesture_label.text = "Camera: connected"
-			else:
-				gesture_label.text = "Waiting for tracker…"
+
 
 func _on_shot_fired(player_id: int) -> void:
 	var target := p2 if player_id == 1 else p1
@@ -79,6 +72,7 @@ func _restart_both() -> void:
 	game_running = true
 	p1.reset()
 	p2.reset()
+
 
 func _on_gesture_received(player_id: int, gesture: String) -> void:
 	if game_over_panel.visible:

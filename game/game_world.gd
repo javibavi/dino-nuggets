@@ -40,15 +40,16 @@ func _ready() -> void:
 	# Reset positions
 	ground_1.position.z = 0.0
 	ground_2.position.z = -GROUND_LENGTH
+	
+func _format_time(t: float) -> String:
+	var m := int(t) / 60
+	var s := int(t) % 60
+	return "%d:%02d" % [m, s]
 
 func _process(delta: float) -> void:
 	if is_game_over:
 		return
 
-	score += game_speed * delta
-	score_changed.emit(player_id, int(score))
-	if int(score) % 100 == 0 and int(score) > 0:
-		point_sound.play()
 
 	game_speed = min(game_speed + SPEED_INCREASE_RATE * delta, MAX_SPEED)
 	var interval = lerp(1.5, 0.6, (game_speed - 15.0) / (MAX_SPEED - 15.0))

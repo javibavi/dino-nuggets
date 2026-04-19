@@ -1,15 +1,15 @@
-[gd_scene load_steps=4 format=3 uid="uid://c0main"]
+[gd_scene format=3 uid="uid://c0main"]
 
 [ext_resource type="Script" uid="uid://boc161reiei5y" path="res://main.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://c0gameworld" path="res://game_world.tscn" id="2"]
 [ext_resource type="Script" uid="uid://cfj8lcwa3444l" path="res://input_receiver.gd" id="3"]
 
-[node name="Main" type="Node"]
+[node name="Main" type="Node" unique_id=1686668337]
 script = ExtResource("1")
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1016723795]
 
-[node name="Split" type="HBoxContainer" parent="UI"]
+[node name="Split" type="HBoxContainer" parent="UI" unique_id=483532713]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -17,40 +17,38 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 4
 
-[node name="LeftViewport" type="SubViewportContainer" parent="UI/Split"]
+[node name="LeftViewport" type="SubViewportContainer" parent="UI/Split" unique_id=1291996646]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="UI/Split/LeftViewport"]
-handle_input_locally = false
-size = Vector2i(640, 720)
+[node name="SubViewport" type="SubViewport" parent="UI/Split/LeftViewport" unique_id=1708136648]
 own_world_3d = true
+handle_input_locally = false
+size = Vector2i(638, 720)
 render_target_update_mode = 4
 
-[node name="GameWorld" parent="UI/Split/LeftViewport/SubViewport" instance=ExtResource("2")]
-player_id = 1
+[node name="GameWorld" parent="UI/Split/LeftViewport/SubViewport" unique_id=2024531938 instance=ExtResource("2")]
 
-[node name="RightViewport" type="SubViewportContainer" parent="UI/Split"]
+[node name="RightViewport" type="SubViewportContainer" parent="UI/Split" unique_id=955483111]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 stretch = true
 
-[node name="SubViewport" type="SubViewport" parent="UI/Split/RightViewport"]
-handle_input_locally = false
-size = Vector2i(640, 720)
+[node name="SubViewport" type="SubViewport" parent="UI/Split/RightViewport" unique_id=977001079]
 own_world_3d = true
+handle_input_locally = false
+size = Vector2i(638, 720)
 render_target_update_mode = 4
 
-[node name="GameWorld" parent="UI/Split/RightViewport/SubViewport" instance=ExtResource("2")]
+[node name="GameWorld" parent="UI/Split/RightViewport/SubViewport" unique_id=901198011 instance=ExtResource("2")]
 player_id = 2
 
-[node name="Divider" type="ColorRect" parent="UI"]
-anchors_preset = 8
+[node name="Divider" type="ColorRect" parent="UI" unique_id=2053233461]
+anchors_preset = 13
 anchor_left = 0.5
-anchor_top = 0.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -2.0
@@ -58,10 +56,10 @@ offset_top = 64.0
 offset_right = 2.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 1)
 mouse_filter = 2
+color = Color(0, 0, 0, 1)
 
-[node name="TimerPanel" type="PanelContainer" parent="UI"]
+[node name="TimerPanel" type="PanelContainer" parent="UI" unique_id=1369798623]
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
@@ -71,29 +69,15 @@ offset_right = 60.0
 offset_bottom = 58.0
 grow_horizontal = 2
 
-[node name="P1Label" type="Label" parent="UI/TimerPanel"]
+[node name="P1Label" type="Label" parent="UI/TimerPanel" unique_id=1057397354]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 26
 text = "0:00"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="P2Label" type="Label" parent="UI"]
-anchors_preset = 5
-anchor_left = 0.75
-anchor_right = 0.75
-offset_left = -120.0
-offset_top = 14.0
-offset_right = 120.0
-offset_bottom = 50.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 26
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "P2: 0"
-horizontal_alignment = 1
-
-[node name="GameOverPanel" type="PanelContainer" parent="UI"]
+[node name="GameOverPanel" type="PanelContainer" parent="UI" unique_id=1847429436]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -107,31 +91,31 @@ offset_bottom = 90.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/GameOverPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/GameOverPanel" unique_id=684936484]
 layout_mode = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="GameOverLabel" type="Label" parent="UI/GameOverPanel/VBoxContainer"]
+[node name="GameOverLabel" type="Label" parent="UI/GameOverPanel/VBoxContainer" unique_id=1023813003]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
 text = "GAME OVER"
 horizontal_alignment = 1
 
-[node name="ResultLabel" type="Label" parent="UI/GameOverPanel/VBoxContainer"]
+[node name="ResultLabel" type="Label" parent="UI/GameOverPanel/VBoxContainer" unique_id=1011896215]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 22
 text = "P1: 0   P2: 0"
 horizontal_alignment = 1
 
-[node name="RestartLabel" type="Label" parent="UI/GameOverPanel/VBoxContainer"]
+[node name="RestartLabel" type="Label" parent="UI/GameOverPanel/VBoxContainer" unique_id=762295906]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
+theme_override_font_sizes/font_size = 16
 text = "Press R to restart"
 horizontal_alignment = 1
 
-[node name="InputReceiver" type="Node" parent="."]
+[node name="InputReceiver" type="Node" parent="." unique_id=1751790285]
 script = ExtResource("3")
