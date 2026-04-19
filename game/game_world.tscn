@@ -160,7 +160,7 @@ obstacle_scene = ExtResource("5")
 low_obstacle_scene = ExtResource("7")
 bird_scene = ExtResource("8")
 bird_chance = 0.25
-bird_height = 2.5
+bird_height = 1.0
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 10, 0)
