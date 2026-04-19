@@ -1,9 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://c0main"]
+[gd_scene load_steps=4 format=3 uid="uid://c0main"]
 
 [ext_resource type="Script" uid="uid://boc161reiei5y" path="res://main.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://c0gameworld" path="res://game_world.tscn" id="2"]
 [ext_resource type="Script" uid="uid://cfj8lcwa3444l" path="res://input_receiver.gd" id="3"]
-[ext_resource type="Script" uid="uid://cv3cb6ntc4rks" path="res://camera_preview.gd" id="4"]
 
 [node name="Main" type="Node"]
 script = ExtResource("1")
@@ -133,50 +132,6 @@ theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
 text = "Press R to restart"
 horizontal_alignment = 1
-
-[node name="GestureLabel" type="Label" parent="UI"]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -260.0
-offset_top = 60.0
-offset_right = -20.0
-offset_bottom = 90.0
-grow_horizontal = 0
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-text = "Camera: starting…"
-horizontal_alignment = 2
-
-[node name="CameraPanel" type="PanelContainer" parent="UI"]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -170.0
-offset_top = -260.0
-offset_right = 170.0
-offset_bottom = -10.0
-grow_horizontal = 2
-grow_vertical = 0
-
-[node name="VBox" type="VBoxContainer" parent="UI/CameraPanel"]
-layout_mode = 2
-
-[node name="CamLabel" type="Label" parent="UI/CameraPanel/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-text = "Hand Tracker (left = P1, right = P2)"
-horizontal_alignment = 1
-
-[node name="CameraPreview" type="TextureRect" parent="UI/CameraPanel/VBox"]
-custom_minimum_size = Vector2(320, 240)
-layout_mode = 2
-expand_mode = 1
-stretch_mode = 5
-script = ExtResource("4")
 
 [node name="InputReceiver" type="Node" parent="."]
 script = ExtResource("3")
