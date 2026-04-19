@@ -17,6 +17,10 @@ signal shot_fired(player_id: int)
 @onready var ground_1: StaticBody3D = $Ground1
 @onready var ground_2: StaticBody3D = $Ground2
 
+@onready var jump_sound: AudioStreamPlayer = $Player/jump
+@onready var die_sound: AudioStreamPlayer = $Player/die
+@onready var point_sound: AudioStreamPlayer = $Player/point
+
 var score := 0.0
 var game_speed := 15.0
 var is_game_over := false
@@ -44,6 +48,8 @@ func _process(delta: float) -> void:
 
 	score += game_speed * delta
 	score_changed.emit(player_id, int(score))
+	if int(score) % 100 == 0 and int(score) > 0:
+		point_sound.play()
 
 	game_speed = min(game_speed + SPEED_INCREASE_RATE * delta, MAX_SPEED)
 	var interval = lerp(1.5, 0.6, (game_speed - 15.0) / (MAX_SPEED - 15.0))
@@ -100,6 +106,7 @@ func on_gesture(gesture: String) -> void:
 			player.move_lane(1)
 		"swipe_up":
 			player.jump()
+			jump_sound.play()
 		"shoot":
 			try_shoot()
 
@@ -107,6 +114,7 @@ func _on_player_died() -> void:
 	is_game_over = true
 	spawner.stop()
 	died.emit(player_id)
+	die_sound.play()
 
 func reset() -> void:
 	is_game_over = false

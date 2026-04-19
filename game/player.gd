@@ -92,6 +92,7 @@ func jump() -> void:
 		return
 	if is_on_floor():
 		vertical_velocity = JUMP_VELOCITY
+		$jump.play()
 
 func die() -> void:
 	if is_dead:

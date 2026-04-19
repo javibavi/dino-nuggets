@@ -1,9 +1,12 @@
-[gd_scene load_steps=20 format=3 uid="uid://c0gameworld"]
+[gd_scene format=3 uid="uid://c0gameworld"]
 
-[ext_resource type="Script" path="res://game_world.gd" id="1"]
+[ext_resource type="Script" uid="uid://bavbhwa8gfdwh" path="res://game_world.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://c0player" path="res://player.tscn" id="2"]
 [ext_resource type="Script" uid="uid://dms3184s5wdiu" path="res://obstacle_spawner.gd" id="3"]
+[ext_resource type="AudioStream" uid="uid://toxbs84a4gum" path="res://sounds/jump.wav" id="3_15365"]
+[ext_resource type="AudioStream" uid="uid://cxivxf3m8by22" path="res://sounds/die.wav" id="4_8imnd"]
 [ext_resource type="PackedScene" uid="uid://c0obstacle" path="res://obstacle.tscn" id="5"]
+[ext_resource type="AudioStream" uid="uid://dna6yqg43us2d" path="res://sounds/point.wav" id="5_554lw"]
 [ext_resource type="PackedScene" uid="uid://c0obstaclelow" path="res://obstacle_low.tscn" id="7"]
 [ext_resource type="PackedScene" uid="uid://c0bird" path="res://bird.tscn" id="8"]
 
@@ -31,6 +34,20 @@ albedo_color = Color(0.7, 0.7, 0.7, 1)
 [sub_resource type="BoxMesh" id="BoxMesh_lane_line"]
 size = Vector3(0.06, 0.23, 200)
 
+[sub_resource type="StandardMaterial3D" id="Material_sun_outline"]
+shading_mode = 0
+albedo_color = Color(0, 0, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sun_outline"]
+size = Vector3(5.4, 5.4, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="Material_sun_fill"]
+shading_mode = 0
+albedo_color = Color(0.9, 0.9, 0.9, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sun"]
+size = Vector3(5, 5, 0.2)
+
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
 background_color = Color(0.9, 0.9, 0.9, 1)
@@ -38,133 +55,127 @@ ambient_light_color = Color(0.9, 0.9, 0.9, 1)
 ambient_light_energy = 0.7
 tonemap_mode = 2
 
-[sub_resource type="BoxMesh" id="BoxMesh_sun"]
-size = Vector3(5, 5, 0.2)
-
-[sub_resource type="StandardMaterial3D" id="Material_sun_fill"]
-shading_mode = 0
-albedo_color = Color(0.9, 0.9, 0.9, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_sun_outline"]
-size = Vector3(5.4, 5.4, 0.1)
-
-[sub_resource type="StandardMaterial3D" id="Material_sun_outline"]
-shading_mode = 0
-albedo_color = Color(0, 0, 0, 1)
-
-[node name="GameWorld" type="Node3D"]
+[node name="GameWorld" type="Node3D" unique_id=2070357626]
 script = ExtResource("1")
 
-[node name="Player" parent="." instance=ExtResource("2")]
+[node name="Player" parent="." unique_id=1281418681 instance=ExtResource("2")]
 
-[node name="Ground1" type="StaticBody3D" parent="."]
+[node name="jump" type="AudioStreamPlayer" parent="Player" unique_id=568630783]
+stream = ExtResource("3_15365")
+volume_db = 14.14
+
+[node name="die" type="AudioStreamPlayer" parent="Player" unique_id=1321662210]
+stream = ExtResource("4_8imnd")
+
+[node name="point" type="AudioStreamPlayer" parent="Player" unique_id=336828719]
+stream = ExtResource("5_554lw")
+volume_db = -10.491
+
+[node name="Ground1" type="StaticBody3D" parent="." unique_id=1963379593]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground1"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground1" unique_id=573079134]
 material_override = SubResource("Material_ground")
 mesh = SubResource("BoxMesh_ground")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground1"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground1" unique_id=1140434117]
 shape = SubResource("BoxShape3D_ground")
 
-[node name="LaneStrip" type="MeshInstance3D" parent="Ground1"]
+[node name="LaneStrip" type="MeshInstance3D" parent="Ground1" unique_id=1651808835]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
 material_override = SubResource("Material_lane")
 mesh = SubResource("BoxMesh_lane")
 
-[node name="LaneCenter" type="MeshInstance3D" parent="Ground1"]
+[node name="LaneCenter" type="MeshInstance3D" parent="Ground1" unique_id=638673621]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
 material_override = SubResource("Material_lane")
 mesh = SubResource("BoxMesh_lane_single")
 
-[node name="LaneLine1" type="MeshInstance3D" parent="Ground1"]
+[node name="LaneLine1" type="MeshInstance3D" parent="Ground1" unique_id=782316888]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.02, 0)
 material_override = SubResource("Material_lane_line")
 mesh = SubResource("BoxMesh_lane_line")
 
-[node name="LaneLine2" type="MeshInstance3D" parent="Ground1"]
+[node name="LaneLine2" type="MeshInstance3D" parent="Ground1" unique_id=1423070918]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0.02, 0)
 material_override = SubResource("Material_lane_line")
 mesh = SubResource("BoxMesh_lane_line")
 
-[node name="LaneLineLeft" type="MeshInstance3D" parent="Ground1"]
+[node name="LaneLineLeft" type="MeshInstance3D" parent="Ground1" unique_id=778361709]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0.02, 0)
 material_override = SubResource("Material_lane_line")
 mesh = SubResource("BoxMesh_lane_line")
 
-[node name="LaneLineRight" type="MeshInstance3D" parent="Ground1"]
+[node name="LaneLineRight" type="MeshInstance3D" parent="Ground1" unique_id=39420713]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.02, 0)
 material_override = SubResource("Material_lane_line")
 mesh = SubResource("BoxMesh_lane_line")
 
-[node name="Ground2" type="StaticBody3D" parent="."]
+[node name="Ground2" type="StaticBody3D" parent="." unique_id=1087245693]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, -200)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground2"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground2" unique_id=681215257]
 material_override = SubResource("Material_ground")
 mesh = SubResource("BoxMesh_ground")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground2"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground2" unique_id=538426617]
 shape = SubResource("BoxShape3D_ground")
 
-[node name="LaneStrip" type="MeshInstance3D" parent="Ground2"]
+[node name="LaneStrip" type="MeshInstance3D" parent="Ground2" unique_id=1425018398]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
 material_override = SubResource("Material_lane")
 mesh = SubResource("BoxMesh_lane")
 
-[node name="LaneCenter" type="MeshInstance3D" parent="Ground2"]
+[node name="LaneCenter" type="MeshInstance3D" parent="Ground2" unique_id=1452579420]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 0)
 material_override = SubResource("Material_lane")
 mesh = SubResource("BoxMesh_lane_single")
 
-[node name="LaneLine1" type="MeshInstance3D" parent="Ground2"]
+[node name="LaneLine1" type="MeshInstance3D" parent="Ground2" unique_id=1544847416]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0.02, 0)
 material_override = SubResource("Material_lane_line")
 mesh = SubResource("BoxMesh_lane_line")
 
-[node name="LaneLine2" type="MeshInstance3D" parent="Ground2"]
+[node name="LaneLine2" type="MeshInstance3D" parent="Ground2" unique_id=1587260771]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0.02, 0)
 material_override = SubResource("Material_lane_line")
 mesh = SubResource("BoxMesh_lane_line")
 
-[node name="LaneLineLeft" type="MeshInstance3D" parent="Ground2"]
+[node name="LaneLineLeft" type="MeshInstance3D" parent="Ground2" unique_id=1555550391]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.75, 0.02, 0)
 material_override = SubResource("Material_lane_line")
 mesh = SubResource("BoxMesh_lane_line")
 
-[node name="LaneLineRight" type="MeshInstance3D" parent="Ground2"]
+[node name="LaneLineRight" type="MeshInstance3D" parent="Ground2" unique_id=21840512]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 0.02, 0)
 material_override = SubResource("Material_lane_line")
 mesh = SubResource("BoxMesh_lane_line")
 
-[node name="Sun" type="Node3D" parent="."]
+[node name="Sun" type="Node3D" parent="." unique_id=107707505]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 25, -60)
 
-[node name="Outline" type="MeshInstance3D" parent="Sun"]
+[node name="Outline" type="MeshInstance3D" parent="Sun" unique_id=120621938]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.05)
-mesh = SubResource("BoxMesh_sun_outline")
 material_override = SubResource("Material_sun_outline")
+mesh = SubResource("BoxMesh_sun_outline")
 
-[node name="Fill" type="MeshInstance3D" parent="Sun"]
-mesh = SubResource("BoxMesh_sun")
+[node name="Fill" type="MeshInstance3D" parent="Sun" unique_id=1420960573]
 material_override = SubResource("Material_sun_fill")
+mesh = SubResource("BoxMesh_sun")
 
-[node name="Camera3D" type="Camera3D" parent="."]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1645847699]
 transform = Transform3D(0.9063, 0.1504, -0.3954, 0, 0.9336, 0.3584, 0.4226, -0.3248, 0.8462, 5, 6, 7)
-fov = 75.0
 current = true
 
-[node name="ObstacleSpawner" type="Node3D" parent="."]
+[node name="ObstacleSpawner" type="Node3D" parent="." unique_id=780336057]
 script = ExtResource("3")
 obstacle_scene = ExtResource("5")
 low_obstacle_scene = ExtResource("7")
 bird_scene = ExtResource("8")
-bird_chance = 0.25
-bird_height = 2.5
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=515714229]
 transform = Transform3D(0.866, -0.25, 0.433, 0, 0.866, 0.5, -0.5, -0.433, 0.75, 0, 10, 0)
 shadow_enabled = true
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=466156727]
 environment = SubResource("Environment_1")
