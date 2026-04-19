@@ -120,6 +120,12 @@ func update_difficulty(speed: float, interval: float) -> void:
 func stop() -> void:
 	is_active = false
 
+func freeze() -> void:
+	is_active = false
+	for child in get_children():
+		if "speed" in child:
+			child.speed = 0.0
+
 func reset() -> void:
 	is_active = true
 	spawn_timer = current_interval

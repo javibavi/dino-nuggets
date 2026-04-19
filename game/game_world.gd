@@ -5,7 +5,6 @@ extends Node3D
 ## by main.tscn to make a split-screen game.
 
 signal died(player_id: int)
-signal score_changed(player_id: int, score: int)
 signal shot_fired(player_id: int)
 
 ## 1 or 2. Selects which input actions the player listens to (p1_* / p2_*).
@@ -25,7 +24,7 @@ var score := 0.0
 var game_speed := 15.0
 var is_game_over := false
 const SPEED_INCREASE_RATE := 0.5
-const MAX_SPEED := 40.0
+const MAX_SPEED := 120.0
 const GROUND_LENGTH := 200.0
 
 var camera_offset := Vector3.ZERO
@@ -118,7 +117,6 @@ func _on_player_died() -> void:
 
 func reset() -> void:
 	is_game_over = false
-	score = 0.0
 	game_speed = 15.0
 	player.is_dead = false
 	player.current_lane = 0
