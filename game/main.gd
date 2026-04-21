@@ -9,7 +9,6 @@ extends Node
 @onready var p1: Node3D = $UI/Split/LeftViewport/SubViewport/GameWorld
 @onready var p2: Node3D = $UI/Split/RightViewport/SubViewport/GameWorld
 @onready var timer_label: Label = $UI/TimerPanel/P1Label
-@onready var p2_label: Label = $UI/P2Label
 @onready var game_over_panel: PanelContainer = $UI/GameOverPanel
 @onready var result_label: Label = $UI/GameOverPanel/VBoxContainer/ResultLabel
 @onready var input_receiver: Node = $InputReceiver

@@ -18,11 +18,15 @@ extends StaticBody3D
 @export var bob_frequency := 2.0
 ## True for flying obstacles (birds) — eligible to be shot down.
 @export var is_flying := false
+## True when this obstacle was sent by the OTHER player. Pulses red so the
+## receiving player can clearly see "this one came from your opponent".
+@export var attack_glow := false
 
 var speed := 15.0
 var _model_instance: Node3D = null
 var _bob_base_y := 0.0
 var _bob_time := 0.0
+var _glow_materials: Array[StandardMaterial3D] = []
 
 func _ready() -> void:
 	_setup_model()
@@ -46,18 +50,34 @@ func _setup_model() -> void:
 func _apply_color_recursive(node: Node) -> void:
 	if node is MeshInstance3D:
 		var mi := node as MeshInstance3D
-		for i in mi.get_surface_override_material_count():
+		# get_surface_override_material_count() can be 0 on glTF imports —
+		# fall back to the mesh's surface count so the override actually applies.
+		var count: int = mi.get_surface_override_material_count()
+		if count == 0 and mi.mesh != null:
+			count = mi.mesh.get_surface_count()
+		for i in count:
 			var mat := StandardMaterial3D.new()
 			mat.albedo_color = model_color
+			if attack_glow:
+				mat.emission_enabled = true
+				mat.emission = model_color
+				mat.emission_energy_multiplier = 1.2
 			mi.set_surface_override_material(i, mat)
+			if attack_glow:
+				_glow_materials.append(mat)
 	for child in node.get_children():
 		_apply_color_recursive(child)
 
 func _physics_process(delta: float) -> void:
 	position.z += speed * delta
+	_bob_time += delta
 	if bob_amplitude > 0.0:
-		_bob_time += delta
 		position.y = _bob_base_y + sin(_bob_time * bob_frequency * TAU) * bob_amplitude
+	# Pulse the emission so attack birds throb between dim and bright.
+	if attack_glow and not _glow_materials.is_empty():
+		var pulse: float = 1.0 + 1.5 * (0.5 + 0.5 * sin(_bob_time * 6.0))
+		for mat in _glow_materials:
+			mat.emission_energy_multiplier = pulse
 	# Remove when behind camera
 	if position.z > 10.0:
 		queue_free()

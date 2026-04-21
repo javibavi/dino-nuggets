@@ -82,6 +82,8 @@ func spawn_obstacle() -> void:
 
 ## Spawn a bird directly in a given lane at a given Z (relative to spawner).
 ## Used for cross-player attacks coming from the opponent.
+## The bird is tinted red and pulses so it's clearly distinguishable from
+## ordinary spawns.
 func spawn_bird_in_lane(lane: int, z_distance: float = -25.0) -> void:
 	if bird_scene == null:
 		return
@@ -89,6 +91,12 @@ func spawn_bird_in_lane(lane: int, z_distance: float = -25.0) -> void:
 	var bird = bird_scene.instantiate()
 	bird.position = Vector3(lane * LANE_WIDTH, bird_height, z_distance)
 	bird.speed = game_speed
+	# Mark it as an attack bird BEFORE add_child so _ready picks up the
+	# new color when it builds the model materials.
+	if "model_color" in bird:
+		bird.model_color = Color(1.0, 0.15, 0.15, 1.0)  # bright red
+	if "attack_glow" in bird:
+		bird.attack_glow = true
 	add_child(bird)
 
 ## Find the nearest flying obstacle in a given lane that is in front of the player.
