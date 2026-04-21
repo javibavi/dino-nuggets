@@ -9,7 +9,7 @@ UDP_PORT    = 6789
 # Joystick thresholds
 X_LEFT  = 200
 X_RIGHT = 800
-Y_UP    = 200
+Y_UP    = 800
 
 # Sudden change in pitch degrees between frames = shoot gesture
 # Tune this value — lower = more sensitive, higher = requires sharper jerk
@@ -49,9 +49,9 @@ while True:
         delta = abs(pitch - prev_pitch)
         prev_pitch = pitch
 
-        if   x < X_LEFT:   send("swipe_left")
-        elif x > X_RIGHT:  send("swipe_right")
-        elif y < Y_UP:     send("swipe_up")
+        if   y < X_LEFT:   send("swipe_left")
+        elif y > X_RIGHT:  send("swipe_right")
+        elif x > Y_UP:     send("swipe_up")
 
         # Sudden upward jerk = shoot
         if delta > JERK_DELTA:
