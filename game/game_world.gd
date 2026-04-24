@@ -80,13 +80,49 @@ func _scroll_ground(ground: StaticBody3D, delta: float) -> void:
 func try_shoot() -> bool:
 	if is_game_over:
 		return false
+	# Muzzle burst fires on every attempt so misses still feel like "a shot".
+	_spawn_shoot_particles()
 	var target = spawner.find_flying_in_lane(player.current_lane, player.position.z)
 	if target == null:
 		return false
 	target.shot_down()
 	player.shoot()
+	point_sound.play()
 	shot_fired.emit(player_id)
 	return true
+
+func _spawn_shoot_particles() -> void:
+	var particles := CPUParticles3D.new()
+	particles.name = "ShootBurst"
+	particles.emitting = true
+	particles.one_shot = true
+	particles.explosiveness = 0.9
+	particles.amount = 24
+	particles.lifetime = 0.35
+	# Shoot forward toward where the birds come from (-Z in this world).
+	particles.direction = Vector3(0, 0.2, -1)
+	particles.spread = 22.0
+	particles.initial_velocity_min = 6.0
+	particles.initial_velocity_max = 11.0
+	particles.gravity = Vector3.ZERO
+	particles.scale_amount_min = 0.08
+	particles.scale_amount_max = 0.16
+	particles.color = Color(1.0, 0.85, 0.3)
+	particles.color_ramp = _shoot_color_ramp()
+	add_child(particles)
+	particles.global_position = player.global_position + Vector3(0, 1.0, -0.4)
+	# Clean up once the burst has played out (timer is a safety net).
+	get_tree().create_timer(particles.lifetime + 0.3).timeout.connect(particles.queue_free)
+
+func _shoot_color_ramp() -> Gradient:
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	g.colors = PackedColorArray([
+		Color(1.0, 0.95, 0.7, 1.0),
+		Color(1.0, 0.7, 0.2, 0.8),
+		Color(1.0, 0.4, 0.1, 0.0),
+	])
+	return g
 
 ## Spawn a bird right in front of THIS player (called when the OTHER player
 ## shoots and forwards the bird).
