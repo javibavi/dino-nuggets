@@ -16,6 +16,7 @@ extends Node
 var gesture_display_timer := 0.0
 var elapsed_time := 0.0
 var game_running := false
+var _game_over_triggered := false
 
 
 func _ready() -> void:
@@ -50,8 +51,9 @@ func _on_shot_fired(player_id: int) -> void:
 
 func _on_world_died(player_id: int) -> void:
 	# Game over when EITHER player dies (simple co-op-versus rule).
-	if game_over_panel.visible:
+	if _game_over_triggered:
 		return
+	_game_over_triggered = true
 	# Freeze both worlds and mark both players dead so stray obstacles
 	# can't re-trigger this and flip the result.
 	p1.is_game_over = true
@@ -61,11 +63,20 @@ func _on_world_died(player_id: int) -> void:
 	p1.spawner.freeze()
 	p2.spawner.freeze()
 	game_running = false
+	# Wait for the dying player's death cinematic (asteroid + nugget) to
+	# play out before we reveal the result.
+	var dying_world: Node3D = p1 if player_id == 1 else p2
+	await dying_world.player.cinematic_done
+	# If the user restarted during the cinematic, _game_over_triggered was
+	# cleared — don't pop the panel back up over a fresh run.
+	if not _game_over_triggered:
+		return
 	game_over_panel.visible = true
 	var verdict := "P2 wins!" if player_id == 1 else "P1 wins!"
 	result_label.text = "%s   —   %s" % [_format_time(elapsed_time), verdict]
 
 func _restart_both() -> void:
+	_game_over_triggered = false
 	game_over_panel.visible = false
 	elapsed_time = 0.0
 	game_running = true

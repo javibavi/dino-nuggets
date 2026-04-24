@@ -27,6 +27,12 @@ var _model_instance: Node3D = null
 var _bob_base_y := 0.0
 var _bob_time := 0.0
 var _glow_materials: Array[StandardMaterial3D] = []
+var _flash_materials: Array[StandardMaterial3D] = []
+var _is_shot := false
+var _shot_timer := 0.0
+
+const FLASH_DURATION := 0.15
+const FLASH_RATE := 20.0
 
 func _ready() -> void:
 	_setup_model()
@@ -63,12 +69,26 @@ func _apply_color_recursive(node: Node) -> void:
 				mat.emission = model_color
 				mat.emission_energy_multiplier = 1.2
 			mi.set_surface_override_material(i, mat)
+			_flash_materials.append(mat)
 			if attack_glow:
 				_glow_materials.append(mat)
 	for child in node.get_children():
 		_apply_color_recursive(child)
 
 func _physics_process(delta: float) -> void:
+	if _is_shot:
+		_shot_timer += delta
+		var is_white: bool = int(_shot_timer * FLASH_RATE) % 2 == 0
+		var flash_color: Color = Color.WHITE if is_white else Color.RED
+		for mat in _flash_materials:
+			mat.albedo_color = flash_color
+			if mat.emission_enabled:
+				mat.emission = flash_color
+				mat.emission_energy_multiplier = 2.5
+		if _shot_timer >= FLASH_DURATION:
+			queue_free()
+		return
+
 	position.z += speed * delta
 	_bob_time += delta
 	if bob_amplitude > 0.0:
@@ -86,6 +106,14 @@ func _on_area_body_entered(body: Node3D) -> void:
 	if body.has_method("die"):
 		body.die()
 
-## Called when this obstacle is shot down. Just despawns for now.
+## Called when this obstacle is shot down. Flashes red/white briefly, then despawns.
 func shot_down() -> void:
-	queue_free()
+	if _is_shot:
+		return
+	_is_shot = true
+	_shot_timer = 0.0
+	var area: Area3D = get_node_or_null("Area3D")
+	if area:
+		area.monitoring = false
+	if _flash_materials.is_empty():
+		queue_free()

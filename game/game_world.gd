@@ -35,6 +35,7 @@ func _ready() -> void:
 	# Wire spawner ↔ player.
 	spawner.player = player
 	player.died.connect(func(): _on_player_died())
+	player.impact.connect(func(): die_sound.play())
 	# Save initial camera offset so it tracks the player.
 	camera_offset = camera.global_position - player.global_position
 	# Reset positions
@@ -114,7 +115,7 @@ func _on_player_died() -> void:
 	is_game_over = true
 	spawner.stop()
 	died.emit(player_id)
-	die_sound.play()
+	# die_sound now plays on impact (see player.impact connection in _ready).
 
 func reset() -> void:
 	is_game_over = false
@@ -125,6 +126,7 @@ func reset() -> void:
 	player.position = Vector3(0, 0.5, 0)
 	player.vertical_velocity = 0.0
 	player.velocity = Vector3.ZERO
+	player.reset_visuals()
 	ground_1.position.z = 0.0
 	ground_2.position.z = -GROUND_LENGTH
 	spawner.reset()
